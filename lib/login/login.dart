@@ -137,6 +137,8 @@ Widget _signInGoogle(context) {
             child: Text(
               'Sign in with Google',
               style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
                 fontSize: 15,
                 color: Color.fromRGBO(255, 0, 159, 1.0),
               ),
@@ -167,6 +169,8 @@ Widget _signInFacebook() {
             child: Text(
               'Sign in with Facebook',
               style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
                 fontSize: 15,
                 color: Color.fromRGBO(36, 114, 240, 1.0),
               ),
