@@ -80,6 +80,7 @@ class _HeaderState extends State<Header> {
         // UI Scaffold
         Scaffold(
           //key: _loginFormKey,
+          resizeToAvoidBottomInset: true,
           appBar: PreferredSize(
             preferredSize: Size.fromHeight(40.0),
             child: GradientAppBar(
