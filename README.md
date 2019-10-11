@@ -1,6 +1,6 @@
-# task_o
+# Task+
 
-Task_O Project
+Task+ Project
 
 ## Getting Started
 
