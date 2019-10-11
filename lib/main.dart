@@ -1,6 +1,7 @@
 import 'dart:ui' as prefix0;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:taskplus/login/login.dart';
 import 'package:taskplus/home/home.dart';
 
@@ -14,7 +15,14 @@ void main() => runApp(App());
 class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return MaterialApp(
+      builder: (context, child) {
+        return ScrollConfiguration(
+          behavior: removeScrollGlow(),
+          child: child,
+        );
+      },
       debugShowCheckedModeBanner: false,
       title: 'Task+',
       theme: ThemeData(
@@ -156,6 +164,15 @@ class SideDrawer extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// removes listview scroll glow
+class removeScrollGlow extends ScrollBehavior {
+  @override
+  Widget buildViewportChrome(
+      BuildContext context, Widget child, AxisDirection axisDirection) {
+    return child;
   }
 }
 

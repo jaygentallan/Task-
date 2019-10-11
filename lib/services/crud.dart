@@ -27,7 +27,7 @@ class CrudMethods {
         .where('uid', isEqualTo: user.uid)
         .getDocuments()
         .catchError((e) {
-          print(e); });;
+          print(e); });
   }
 
   // This function takes in the UID of a user
@@ -39,7 +39,7 @@ class CrudMethods {
         .where('uid', isEqualTo: uid)
         .getDocuments()
         .catchError((e) {
-          print(e); });;
+          print(e); });
   }
 
   // This function accepts the documentID and value
@@ -87,14 +87,53 @@ class CrudMethods {
   }
 
   // This function adds a post to the database
-  addTask(data, context) {
-    Firestore.instance.collection('tasks').document('home').collection('tasks')
+  addTaskHabit(data, context) {
+    Firestore.instance.collection('tasks').document('home').collection('habits')
         .add({
       'title': data[0],
       'description': data[1],
       'icon': data[2],
-      'date': data[3],
-      'uid': data[4],
+      'color': data[3],
+      'type': data[4],
+      'length': data[5],
+      'date': data[6],
+      'uid': data[7],
+    })
+        .then((value) {
+    })
+        .catchError((e) { print(e); });
+  }
+
+  // This function adds a post to the database
+  addTaskGoal(data, context) {
+    Firestore.instance.collection('tasks').document('home').collection('goals')
+        .add({
+      'title': data[0],
+      'description': data[1],
+      'icon': data[2],
+      'color': data[3],
+      'type': data[4],
+      'length': data[5],
+      'amount': data[6],
+      'date': data[7],
+      'uid': data[8],
+    })
+        .then((value) {
+    })
+        .catchError((e) { print(e); });
+  }
+
+  // This function adds a post to the database
+  addTaskAppointment(data, context) {
+    Firestore.instance.collection('tasks').document('home').collection('appointments')
+        .add({
+      'title': data[0],
+      'description': data[1],
+      'icon': data[2],
+      'color': data[3],
+      'type': data[4],
+      'date': data[6],
+      'uid': data[7],
     })
         .then((value) {
     })

@@ -7,6 +7,10 @@ class UserData {
   String title = '';
   String description = '';
   String icon = '';
+  String color = '';
+  String type = '';
+  String length = '';
+  int amount;
   String date = '';
   String uid = '';
 

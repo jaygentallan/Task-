@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/block_picker.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -33,381 +35,21 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _title = TextEditingController();
   final TextEditingController _description = TextEditingController();
 
-  Color pickerColor = Color(int.parse('0xffff9aa2'));
-  Color currentColor = Color(int.parse('0xffff9aa2'));
+  Color _currColor = Color(int.parse('0xffff9aa2'));
+  String _currIcon = '0xe800';
+  String _currType;
+  String _currLength = 'day';
+  int _currAmount = 1;
+  bool _currNotify = false;
 
-  IconData _currIcon = Icons.work;
-
-  List<IconData> iconList = <IconData>[
-  ];
-
-  void changeColor(Color color) {
-    setState(() {
-      pickerColor = color;
-    });
-  }
-
-
-  // Color picker
-  Future<bool> colorPicker(BuildContext context) async {
-    return showDialog(
-        context: context,
-        barrierDismissible: true,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("Pick a color!"),
-            content: SingleChildScrollView(
-              child: BlockPicker(
-                pickerColor: currentColor,
-                onColorChanged: changeColor,
-              ),
-            ),
-            actions: <Widget>[
-              FlatButton(
-                child: const Text("Got it"),
-                onPressed: () {
-                  setState(() => currentColor = pickerColor);
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                  addTaskPrompt(context);
-                },
-              ),
-            ],
-          );
-        }
-    );
-  }
-
-  // Dialog for posting a status
-  Future<bool> addTaskPrompt(BuildContext context) async {
-    double _width = MediaQuery.of(context).size.width;
-    double _height = MediaQuery.of(context).size.width;
-    return showDialog(
-        context: context,
-        barrierDismissible: true,
-        builder: (BuildContext context) {
-          return Material(
-            color: Colors.transparent,
-            child: Center(
-              child: Container(
-                padding: EdgeInsets.only(
-                  top: _height * 0.05,
-                  bottom: _height * 0.05,
-                  left: _width * 0.05,
-                  right: _width * 0.05,
-                ),
-                height: _height * 1.6,
-                width: _width * 0.85,
-                decoration: BoxDecoration(
-                  color: currentColor,
-                  borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: <Widget>[
-
-                          SizedBox(width: 10.0),
-
-                          Container(
-                            height: 60.0,
-                            width: 60.0,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  offset: Offset(0.0, 10.0),
-                                  blurRadius: 5.0,
-                                  spreadRadius: 1.0,
-                                ),
-                              ],
-                              borderRadius: BorderRadius.all(Radius.circular(60.0)),
-                              color: Colors.white,
-                            ),
-                            child: Stack(
-                              children: <Widget>[
-
-                                Center(
-                                  child: Icon(
-                                    _currIcon,
-                                    size: 35.0,
-                                    color: currentColor,
-                                  ),
-                                ),
-
-                                DropdownButton<IconData>(
-                                  iconEnabledColor: Colors.transparent,
-                                  underline: Text(''),
-                                  onChanged: (IconData newIcon) {
-                                    setState(() {
-                                      _currIcon = newIcon;
-                                      Navigator.of(context).pop();
-                                      addTaskPrompt(context);
-                                    });
-                                  },
-                                  items: iconList.map<DropdownMenuItem<IconData>>((IconData value) {
-                                    return DropdownMenuItem<IconData>(
-                                      value: value,
-                                      child: Center(child: Icon(value, size: 36.0, color: currentColor)),
-                                    );
-                                  }).toList(),
-                                ),
-
-                              ]
-                            ),
-                          ),
-
-                          SizedBox(width: 5.0),
-
-                          Container(
-                            height: _height * 0.2,
-                            width: _width * 0.53,
-                            decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.all(
-                                    const Radius.circular(10.0))
-                            ),
-
-                          // description text box
-                            child: TextField(
-                              textAlign: TextAlign.center,
-                              controller: _title,
-                              showCursor: false,
-                              keyboardType: TextInputType.text,
-                              maxLines: 2,
-                              inputFormatters: [LengthLimitingTextInputFormatter(26)],
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 25.0,
-                              ),
-                              decoration: InputDecoration.collapsed(
-                                fillColor: Colors.transparent,
-                                hintText: 'Add a title',
-                                hintStyle: TextStyle(color: Colors.white),
-                                filled: true,
-                              ),
-                              onChanged: (value) {
-                                setState(() {
-                                  //userData.post = value;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      Container(
-                        //margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                        height: _height * 0.3,
-                        padding: const EdgeInsets.all(10.0),
-                        alignment: FractionalOffset.center,
-                        decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.all(
-                                const Radius.circular(10.0))
-                        ),
-
-                        // description text box
-                        child: TextField(
-                          textAlign: TextAlign.center,
-                          controller: _description,
-                          keyboardType: TextInputType.multiline,
-                          showCursor: false,
-                          maxLines: 3,
-                          inputFormatters: [LengthLimitingTextInputFormatter(39)],
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20.0,
-                          ),
-                          decoration: InputDecoration.collapsed(
-                            fillColor: Colors.transparent,
-                            hintText: 'Give a short description',
-                            hintStyle: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20.0,
-                            ),
-                            filled: true,
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              //userData.post = value;
-                            });
-                          },
-                        ),
-                      ),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-
-                          _colorButton(context, 0xffff9aa2),
-                          _colorButton(context, 0xffffdac1),
-                          _colorButton(context, 0xffe2f0cb),
-                          _colorButton(context, 0xffb5ead7),
-                          _colorButton(context, 0xffc7ceea),
-
-                        ],
-                      ),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-
-                          _colorButton(context, 0xffd81e5b),
-                          _colorButton(context, 0xff420039),
-                          _colorButton(context, 0xff09814a),
-                          _colorButton(context, 0xffff7f11),
-                          _colorButton(context, 0xff3e6990),
-
-                        ],
-                      ),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-
-                          FlatButton(
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                            onPressed: () {
-                              _title.clear();
-                              _description.clear();
-                              Navigator.of(context).pop();
-                            },
-                          ),
-
-                          // When users click Confirm, the firestore database is then updated with the user post
-                          FlatButton(
-                            child: Text(
-                              'Confirm',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                            onPressed: () {
-
-                              // Gets the current date and time to put on the post
-                              var now = DateTime.now();
-                              userData.date = DateFormat.yMMMMd('en_US').format(now);
-                              userData.date = "${userData.date}" " ${DateFormat.jm().format(now)}";
-
-                              List<String> data = [
-                                userData.title,
-                                userData.description,
-                                userData.icon,
-                                userData.date,
-                                userData.uid,
-                              ];
-
-                              crud.addTask(data, context);
-
-                              _title.clear();
-                              _description.clear();
-                              Navigator.of(context).pop();
-                            },
-                          )
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-    );
-  }
-
-  Widget _colorButton(context, color) {
-    return RawMaterialButton(
-      constraints: BoxConstraints.tight(Size(36, 36)),
-      shape: CircleBorder(
-        side: BorderSide(width: 2.0, color: Colors.white)
-      ),
-      elevation: 2.0,
-      fillColor: Color(color),
-      onPressed: () {
-        setState(() {
-          currentColor = Color(color);
-          Navigator.of(context).pop();
-          addTaskPrompt(context);
-        });
-      },
-    );
-  }
-
-  Widget _update() {
-    return FutureBuilder(
-        future: FirebaseAuth.instance.currentUser(),
-        builder: (context, AsyncSnapshot<FirebaseUser> snapshot) {
-          if (snapshot.hasData) {
-            if (snapshot.data != null) {
-              // Get posts from firebase and put it on singleton
-              crud.getCrewPosts().then((results) {
-                userData.posts = results;
-              });
-            }
-          }
-          return Container(height: 0.0, width: 0.0);
-        }
-    );
-  }
+  List<IconData> _iconList = <IconData>[];
 
   @override
   void initState() {
     super.initState();
     _rows = [TaskCard(key: UniqueKey())];
-    List<int> exclude = <int>[1,9,16,17,21,24,27,28,29,33];
-    List<String> hexa = ['a','b','c','d','e','f'];
-    for (var i = 0; i < 43; i++) {
-      if (exclude.contains(i)) {
-        continue;
-      }
-      else if (i < 16) {
-        if (i % 15 == 10) {
-          for (var j in hexa) {
-            if (j == 'a') { continue; }
-            if (j == 'b') { continue; }
-            if (j == 'c') { continue; }
-            if (j == 'd') { continue; }
-            if (j == 'e') { continue; }
-            iconList.add(IconData(int.parse('0xe80$j'), fontFamily: 'icons'));
-          }
-        }
-        else if (i > 10) {
-          continue;
-        }
-        else {
-          iconList.add(IconData(int.parse('0xe80$i'), fontFamily: 'icons'));
-        }
-      }
-      else {
-        if (i % 15 == 10) {
-          for (var j in hexa) {
-            print(i);
-            print("Int is: ${i ~/ 15}$j");
-            if (i ~/ 15 == 1 && j == 'c') { continue; }
-            if (i ~/ 15 == 1 && j == 'e') { continue; }
-            if (i ~/ 15 == 2 && j == 'a') { continue; }
-            iconList.add(IconData(int.parse('0xe8${i~/15}$j'), fontFamily: 'icons'));
-          }
-        }
-        else if (i % 15 > 10) {
-          continue;
-        }
-        else {
-          iconList.add(IconData(int.parse('0xe8$i'), fontFamily: 'icons'));
-        }
-      }
-    }
-    print(iconList.length);
+
+    _initIcons();
   }
 
   @override
@@ -563,6 +205,665 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+
+
+  // Dialog for posting a status
+  Future<bool> addTaskPrompt(BuildContext context) async {
+    double _width = MediaQuery.of(context).size.width;
+    double _height = MediaQuery.of(context).size.width;
+    return showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return Material(
+            color: Colors.transparent,
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.only(
+                  top: _height * 0.05,
+                  left: _width * 0.05,
+                  right: _width * 0.05,
+                ),
+                height: _height * 1.6,
+                width: _width * 0.85,
+                decoration: BoxDecoration(
+                  color: _currColor,
+                  borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _currColor,
+                      blurRadius: 10.0,
+                      spreadRadius: 1.0,
+                      offset: Offset(0.0, 2.5),
+                    ),
+                  ],
+                ),
+                child: ListView(
+                  children: <Widget>[
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+
+                        SizedBox(width: 10.0),
+
+                        Container(
+                          height: 60.0,
+                          width: 60.0,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                offset: Offset(0.0, 10.0),
+                                blurRadius: 5.0,
+                                spreadRadius: 1.0,
+                              ),
+                            ],
+                            borderRadius: BorderRadius.all(Radius.circular(60.0)),
+                            color: Colors.white,
+                          ),
+                          child: Stack(
+                              children: <Widget>[
+
+                                // icon getting the _currIcon string and parsing it into an int
+                                Center(
+                                  child: Icon(
+                                    IconData(int.parse(_currIcon), fontFamily: 'icons'),
+                                    size: 35.0,
+                                    color: _currColor,
+                                  ),
+                                ),
+
+                                Theme(
+                                  data: ThemeData(
+                                    canvasColor: _currColor,
+                                  ),
+                                  child: DropdownButton<IconData>(
+                                    iconEnabledColor: Colors.transparent,
+                                    underline: Text(''),
+                                    onChanged: (IconData newIcon) {
+                                      setState(() {
+                                        _currIcon = '0xe${newIcon.toString().substring(13,16)}';
+                                        userData.icon = '0xe${newIcon.toString().substring(13,16)}';
+                                        Navigator.of(context).pop();
+                                        addTaskPrompt(context);
+                                      });
+                                    },
+                                    items: _iconList.map<DropdownMenuItem<IconData>>((IconData value) {
+                                      return DropdownMenuItem<IconData>(
+                                        value: value,
+                                        child: Center(child: Icon(value, size: 36.0, color: Colors.white)),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+
+                              ],
+                          ),
+                        ),
+
+                        SizedBox(width: 5.0),
+
+                        // container for textfield container
+                        Container(
+                          width: _width * 0.53,
+                          decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.all(
+                                  const Radius.circular(10.0))
+                          ),
+                          // title text box
+                          child: TextField(
+                            textAlign: TextAlign.center,
+                            controller: _title,
+                            showCursor: false,
+                            keyboardType: TextInputType.text,
+                            maxLines: 2,
+                            maxLength: 27,
+                            maxLengthEnforced: true,
+                            buildCounter: (BuildContext context, { int currentLength, int maxLength, bool isFocused }) => null,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 25.0,
+                            ),
+                            decoration: InputDecoration.collapsed(
+                              fillColor: Colors.transparent,
+                              hintText: 'Add a title',
+                              hintStyle: TextStyle(color: Colors.white),
+                              filled: true,
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                userData.title = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // container for description textfield
+                    Container(
+                      height: _height * 0.253,
+                      margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                      alignment: FractionalOffset.center,
+                      decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.all(
+                              const Radius.circular(10.0))
+                      ),
+
+                      // description text box
+                      child: TextField(
+                        textAlign: TextAlign.center,
+                        controller: _description,
+                        keyboardType: TextInputType.text,
+                        showCursor: false,
+                        maxLines: 3,
+                        maxLength: 60,
+                        maxLengthEnforced: true,
+                        buildCounter: (BuildContext context, { int currentLength, int maxLength, bool isFocused }) => null,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20.0,
+                        ),
+                        decoration: InputDecoration.collapsed(
+                          fillColor: Colors.transparent,
+                          hintText: 'Give a short description',
+                          hintStyle: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20.0,
+                          ),
+                          filled: true,
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            userData.description = value;
+                          });
+                        },
+                      ),
+                    ),
+
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                      child: Theme(
+                        data: ThemeData(
+                          canvasColor: _currColor,
+                        ),
+                        child: DropdownButton<String>(
+                          value: _currType,
+                          icon: Icon(IconData(0xe829, fontFamily: 'icons')),
+                          iconEnabledColor: Colors.white,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.0,
+                            fontFamily: 'Poppins',
+                          ),
+                          hint: Text(
+                            'Type',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18.0,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          underline: Container(
+                              height: 2.0,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.all(Radius.circular(1.0)),
+                              ),
+                          ),
+                          onChanged: (String newValue) {
+                            setState(() {
+                              _currType = newValue;
+                              userData.type = newValue;
+                              Navigator.of(context).pop();
+                              addTaskPrompt(context);
+                            });
+                          },
+                          items: ['Habit', 'Goal', 'Appointment'].map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String> (
+                                value: value,
+                                child: Text(
+                                  value,
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              );
+                            })
+                            .toList(),
+                        ),
+                      ),
+                    ),
+
+                    // used as padding
+                    SizedBox(height: _height * 0.025),
+
+                    _currType == 'Habit'
+                      ? userData.title != ''
+                        ? Container(
+                            height: _height * 0.46,
+                            margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+
+                                AutoSizeText(
+                                  '${userData.title}',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    height: 1.0,
+                                    fontSize: 20.0,
+                                  ),
+                                  textAlign: TextAlign.start,
+                                ),
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: <Widget>[
+
+                                    Text(
+                                      'Every',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20.0,
+                                      ),
+                                    ),
+
+                                    Container(
+                                      margin: EdgeInsets.symmetric(horizontal: _width * 0.01),
+                                      child: Theme(
+                                        data: ThemeData(
+                                          canvasColor: _currColor,
+                                        ),
+                                        child: DropdownButton<String>(
+                                          value: _currLength,
+                                          icon: Icon(IconData(0xe829, fontFamily: 'icons')),
+                                          iconEnabledColor: Colors.white,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18.0,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                          underline: Container(
+                                            height: 2.0,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.all(Radius.circular(1.0)),
+                                            ),
+                                          ),
+                                          onChanged: (String newValue) {
+                                            setState(() {
+                                              _currLength = newValue;
+                                              userData.length = newValue;
+                                              Navigator.of(context).pop();
+                                              addTaskPrompt(context);
+                                            });
+                                          },
+                                          items: ['day', 'week', 'month'].map<DropdownMenuItem<String>>((String value) {
+                                            return DropdownMenuItem<String> (
+                                              value: value,
+                                              child: Text(
+                                                value,
+                                                style: TextStyle(
+                                                  fontSize: 18.0,
+                                                  fontFamily: 'Poppins',
+                                                ),
+                                              ),
+                                            );
+                                          })
+                                              .toList(),
+                                        ),
+                                      ),
+                                    ),
+
+                                  ],
+                                ),
+
+                                _currLength == 'week' || _currLength == 'month'
+                                  ? Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: <Widget>[
+
+                                        Text(
+                                          'As often as',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20.0,
+                                          ),
+                                        ),
+
+                                        Container(
+                                          width: _width * 0.171,
+                                          margin: EdgeInsets.symmetric(horizontal: _width * 0.02),
+                                          child: Theme(
+                                            data: ThemeData(
+                                              canvasColor: _currColor,
+                                            ),
+                                            child: ButtonTheme(
+                                              alignedDropdown: true,
+                                              child: DropdownButton<int>(
+                                                value: _currAmount,
+                                                icon: Icon(IconData(0xe829, fontFamily: 'icons')),
+                                                iconEnabledColor: Colors.white,
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 18.0,
+                                                  fontFamily: 'Poppins',
+                                                ),
+                                                underline: Container(
+                                                  height: 2.0,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius: BorderRadius.all(Radius.circular(1.0)),
+                                                  ),
+                                                ),
+                                                onChanged: (int newValue) {
+                                                  setState(() {
+                                                    _currAmount = newValue;
+                                                    userData.amount = newValue;
+                                                    Navigator.of(context).pop();
+                                                    addTaskPrompt(context);
+                                                  });
+                                                },
+                                                items: List<DropdownMenuItem<int>>.generate(50, ((int value) {
+                                                  return DropdownMenuItem<int> (
+                                                    value: value,
+                                                    child: Text(
+                                                      '$value',
+                                                      style: TextStyle(
+                                                        fontSize: 18.0,
+                                                        fontFamily: 'Poppins',
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                        Text(
+                                          'times',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20.0,
+                                          ),
+                                        ),
+
+                                      ],
+                                    )
+                                  : Container(),
+
+                                // used as padding
+                                SizedBox(height: _height * 0.01),
+
+                                Expanded(
+                                  child: Stack(
+                                    children: <Widget>[
+
+                                      Positioned(
+                                        left: 0.0,
+                                        child: Text(
+                                          'Notify me',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20.0,
+                                          ),
+                                        ),
+                                      ),
+
+                                      Positioned(
+                                        right: 0.0,
+                                        child: CupertinoSwitch(
+                                          value: _currNotify,
+                                          onChanged: (bool value) { setState(() { _currNotify = value; }); },
+                                        ),
+                                      ),
+
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        )
+                        : Container(
+                            height: _height * 0.06,
+                            margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                            child: Text(
+                              'Please enter a title',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20.0,
+                              ),
+                            ),
+                          )
+                      : _currType == 'Goal'
+                      ? userData.title != ''
+                        ? Container(
+                          height: _height * 0.4,
+                        )
+                        : Container(
+                          height: _height * 0.06,
+                          margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                          child: Text(
+                            'Please enter a title',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                            ),
+                          ),
+                        )
+                      : _currType == 'Appointment'
+                      ? userData.title != ''
+                        ? Container(
+                          height: _height * 0.4,
+                        )
+                        : Container(
+                          height: _height * 0.06,
+                          margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                          child: Text(
+                            'Please enter a title',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                            ),
+                          ),
+                        )
+                      : Container(),
+
+                    // used for padding
+                    SizedBox(height: _height * 0.05),
+
+                    // first row of PASTEL colors
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+
+                        _colorButton(context, 0xffff9aa2),
+                        _colorButton(context, 0xffffdac1),
+                        _colorButton(context, 0xffe2f0cb),
+                        _colorButton(context, 0xffb5ead7),
+                        _colorButton(context, 0xffc7ceea),
+                        _colorButton(context, 0xff957dad),
+
+                      ],
+                    ),
+
+                    // second row of VIBRANT colors
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+
+                        _colorButton(context, 0xffd81e5b),
+                        _colorButton(context, 0xff420039),
+                        _colorButton(context, 0xff09814a),
+                        _colorButton(context, 0xffffb20f),
+                        _colorButton(context, 0xffff7f11),
+                        _colorButton(context, 0xff3e6990),
+
+                      ],
+                    ),
+
+                    // used as padding
+                    SizedBox(height: _height * 0.05),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+
+                        FlatButton(
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                            ),
+                          ),
+                          onPressed: () {
+                            _title.clear();
+                            _description.clear();
+                            _currIcon = '0xe800';
+                            _currColor = Color(int.parse('0xffff9aa2'));
+                            _currType = null;
+                            _currLength = 'day';
+                            _currAmount = 0;
+                            _currNotify = false;
+                            userData.title = '';
+                            userData.description = '';
+                            userData.icon = '';
+                            userData.color = '';
+                            userData.date = '';
+                            userData.length = '';
+                            userData.amount = null;
+                            Navigator.of(context).pop();
+                          },
+                        ),
+
+                        // used as padding
+                        SizedBox(width: _width * 0.15),
+
+                        // When users click Confirm, the firestore database is then updated with the user post
+                        FlatButton(
+                          child: Text(
+                            'Confirm',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                            ),
+                          ),
+                          onPressed: () {
+
+                            // Gets the current date and time to put on the post
+                            var now = DateTime.now();
+                            userData.date = DateFormat.yMMMMd('en_US').format(now);
+                            userData.date = '${userData.date}' ' ${DateFormat.jm().format(now)}';
+
+                            List<String> data = [
+                              userData.title,
+                              userData.description,
+                              userData.icon,
+                              userData.date,
+                              userData.uid,
+                            ];
+
+                            crud.addTaskHabit(data, context);
+
+                            _title.clear();
+                            _description.clear();
+                            Navigator.of(context).pop();
+                          },
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+    );
+  }
+
+
+  void _initIcons() {
+    // initialize icons for task card
+    List<int> exclude = <int>[1, 9, 16, 17, 21, 24, 27, 28, 29, 33];
+    List<String> hexa = ['a', 'b', 'c', 'd', 'e', 'f'];
+    for (var i = 0; i < 43; i++) {
+      if (exclude.contains(i)) {
+        continue;
+      }
+      else if (i < 16) {
+        if (i % 15 == 10) {
+          for (var j in hexa) {
+            if (j == 'a' || (j == 'b') || (j == 'c') || (j == 'd') || (j == 'e')) { continue; }
+            _iconList.add(IconData(int.parse('0xe80$j'), fontFamily: 'icons'));
+          }
+        }
+        else if (i > 10) { continue; }
+        else { _iconList.add(IconData(int.parse('0xe80$i'), fontFamily: 'icons')); }
+      }
+      else {
+        if (i % 15 == 10) {
+          for (var j in hexa) {
+            if ((i ~/ 15 == 1 && j == 'c') || (i ~/ 15 == 1 && j == 'e') || (i ~/ 15 == 2 && j == 'a')) { continue; }
+            _iconList.add(IconData(int.parse('0xe8${i ~/ 15}$j'), fontFamily: 'icons'));
+          }
+        }
+        else if (i % 15 > 10) { continue; }
+        else { _iconList.add(IconData(int.parse('0xe8$i'), fontFamily: 'icons')); }
+      }
+    }
+  }
+
+
+  Widget _colorButton(context, color) {
+    double _width = MediaQuery.of(context).size.width;
+    return SizedBox(
+      width: _width * 0.12,
+      child: RawMaterialButton(
+        constraints: BoxConstraints.tight(Size(_width * 0.1, _width * 0.1)),
+        shape: CircleBorder(
+            side: BorderSide(width: 2.0, color: Colors.white)
+        ),
+        elevation: 5.0,
+        fillColor: Color(color),
+        onPressed: () {
+          setState(() {
+            _currColor = Color(color);
+            userData.color = color.toString();
+            Navigator.of(context).pop();
+            addTaskPrompt(context);
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _update() {
+    return FutureBuilder(
+        future: FirebaseAuth.instance.currentUser(),
+        builder: (context, AsyncSnapshot<FirebaseUser> snapshot) {
+          if (snapshot.hasData) {
+            if (snapshot.data != null) {
+              // Get posts from firebase and put it on singleton
+              crud.getCrewPosts().then((results) {
+                userData.posts = results;
+              });
+            }
+          }
+          return Container(height: 0.0, width: 0.0);
+        }
+    );
+  }
+
 }
 
 class TaskCard extends StatefulWidget {
@@ -679,7 +980,7 @@ class TaskCardState extends State<TaskCard> {
                               SizedBox(width: _width * 0.01),
 
                               Text(
-                                  "Ongoing",
+                                  'Ongoing',
                                   style: TextStyle(
                                     fontSize: 15.0,
                                     color: Colors.white,
