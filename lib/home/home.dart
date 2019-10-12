@@ -6,11 +6,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_colorpicker/block_picker.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:reorderables/reorderables.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_widgets/flutter_widgets.dart';
 
 import 'package:taskplus/services/crud.dart';
 import 'package:taskplus/singletons/userdata.dart';
@@ -32,8 +33,10 @@ class _HomePageState extends State<HomePage> {
 
   CrudMethods crud = CrudMethods();
 
-  final TextEditingController _title = TextEditingController();
-  final TextEditingController _description = TextEditingController();
+  final TextEditingController _titleKeyboard = TextEditingController();
+  final TextEditingController _descriptionKeyboard = TextEditingController();
+  final TextEditingController _stepsKeyboard = TextEditingController();
+  ItemScrollController _stepsController = ItemScrollController();
 
   Color _currColor = Color(int.parse('0xffff9aa2'));
   String _currIcon = '0xe800';
@@ -42,6 +45,7 @@ class _HomePageState extends State<HomePage> {
   int _currAmount = 1;
   bool _currNotify = false;
 
+  List<String> _currStepList = <String> [];
   List<IconData> _iconList = <IconData>[];
 
   @override
@@ -77,7 +81,7 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               Container(
             color: Colors.white,
-            child: ListView(
+            child: Column(
               children: <Widget>[
 
                 // container at the top used to store all
@@ -238,7 +242,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                child: ListView(
+                child: Column(
                   children: <Widget>[
 
                     Row(
@@ -316,7 +320,7 @@ class _HomePageState extends State<HomePage> {
                           // title text box
                           child: TextField(
                             textAlign: TextAlign.center,
-                            controller: _title,
+                            controller: _titleKeyboard,
                             showCursor: false,
                             keyboardType: TextInputType.text,
                             maxLines: 2,
@@ -357,7 +361,7 @@ class _HomePageState extends State<HomePage> {
                       // description text box
                       child: TextField(
                         textAlign: TextAlign.center,
-                        controller: _description,
+                        controller: _descriptionKeyboard,
                         keyboardType: TextInputType.text,
                         showCursor: false,
                         maxLines: 3,
@@ -442,7 +446,7 @@ class _HomePageState extends State<HomePage> {
                     ),
 
                     // used as padding
-                    SizedBox(height: _height * 0.025),
+                    SizedBox(height: _height * 0.015),
 
                     _currType == 'Habit'
                       ? userData.title != ''
@@ -458,7 +462,7 @@ class _HomePageState extends State<HomePage> {
                                   style: TextStyle(
                                     color: Colors.white,
                                     height: 1.0,
-                                    fontSize: 20.0,
+                                    fontSize: 18.0,
                                   ),
                                   textAlign: TextAlign.start,
                                 ),
@@ -471,7 +475,7 @@ class _HomePageState extends State<HomePage> {
                                       'Every',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 20.0,
+                                        fontSize: 18.0,
                                       ),
                                     ),
 
@@ -534,7 +538,7 @@ class _HomePageState extends State<HomePage> {
                                           'As often as',
                                           style: TextStyle(
                                             color: Colors.white,
-                                            fontSize: 20.0,
+                                            fontSize: 18.0,
                                           ),
                                         ),
 
@@ -573,9 +577,9 @@ class _HomePageState extends State<HomePage> {
                                                 },
                                                 items: List<DropdownMenuItem<int>>.generate(50, ((int value) {
                                                   return DropdownMenuItem<int> (
-                                                    value: value,
+                                                    value: value+1,
                                                     child: Text(
-                                                      '$value',
+                                                      '${value+1}',
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         fontFamily: 'Poppins',
@@ -593,7 +597,7 @@ class _HomePageState extends State<HomePage> {
                                           'times',
                                           style: TextStyle(
                                             color: Colors.white,
-                                            fontSize: 20.0,
+                                            fontSize: 18.0,
                                           ),
                                         ),
 
@@ -614,7 +618,7 @@ class _HomePageState extends State<HomePage> {
                                           'Notify me',
                                           style: TextStyle(
                                             color: Colors.white,
-                                            fontSize: 20.0,
+                                            fontSize: 18.0,
                                           ),
                                         ),
                                       ),
@@ -640,15 +644,110 @@ class _HomePageState extends State<HomePage> {
                               'Please enter a title',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 20.0,
+                                fontSize: 18.0,
                               ),
                             ),
                           )
                       : _currType == 'Goal'
                       ? userData.title != ''
-                        ? Container(
-                          height: _height * 0.4,
-                        )
+                        ? Column(
+                            children: <Widget>[
+                              Container(
+                                height: _height * 0.36,
+                                margin: EdgeInsets.symmetric(horizontal: _width * 0.013),
+                                padding: EdgeInsets.only(left: 0.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white30,
+                                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                                ),
+                                child: Column(
+                                  children: <Widget>[
+
+                                    _currStepList.length != 0
+                                      ? Container(
+                                        child: Flexible(
+                                          child: Scrollbar(
+                                            child: ScrollablePositionedList.builder(
+                                              itemScrollController: _stepsController,
+                                              itemCount: _currStepList.length,
+                                              itemBuilder: (BuildContext ctxt, int index) {
+                                                return Container(
+                                                  child: Row(
+                                                    children: <Widget>[
+
+                                                      Transform.scale(
+                                                        scale: 1.5,
+                                                        child: Checkbox(
+                                                          activeColor: _currColor,
+                                                          checkColor: Colors.white,
+                                                          value: true,
+                                                          onChanged: (bool value) {},
+                                                        ),
+                                                      ),
+
+                                                      Text(
+                                                        _currStepList[index],
+                                                        style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 15.0,
+                                                      ),),
+
+                                                    ],
+                                                  ),
+                                                );
+
+                                              }
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Container(),
+                                  ],
+                                ),
+                              ),
+
+                              Container(
+                                margin: EdgeInsets.only(top: 10.0, left: 10.0),
+                                child: TextField(
+                                  textAlign: TextAlign.justify,
+                                  controller: _stepsKeyboard,
+                                  keyboardType: TextInputType.text,
+                                  showCursor: false,
+                                  maxLines: 1,
+                                  maxLength: 60,
+                                  maxLengthEnforced: true,
+                                  buildCounter: (BuildContext context, { int currentLength, int maxLength, bool isFocused }) => null,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18.0,
+                                  ),
+                                  decoration: InputDecoration.collapsed(
+                                    fillColor: Colors.transparent,
+                                    hintText: 'Add a new step',
+                                    hintStyle: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18.0,
+                                    ),
+                                    filled: true,
+                                  ),
+                                  onSubmitted: (value) {
+                                    setState(() {
+                                      _currStepList.add(value);
+                                      _stepsKeyboard.clear();
+                                    });
+                                    _currStepList.length == 1
+                                        ? _stepsController.jumpTo(index: _currStepList.length-1)
+                                        : _currStepList.length == 2
+                                        ? _stepsController.jumpTo(index: _currStepList.length-2)
+                                        : _currStepList.length >= 3
+                                        ? _stepsController.jumpTo(index: _currStepList.length-3)
+                                        : Container();
+                                  },
+                                ),
+                              ),
+
+                            ],
+                          )
                         : Container(
                           height: _height * 0.06,
                           margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
@@ -656,7 +755,7 @@ class _HomePageState extends State<HomePage> {
                             'Please enter a title',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 20.0,
+                              fontSize: 18.0,
                             ),
                           ),
                         )
@@ -672,14 +771,14 @@ class _HomePageState extends State<HomePage> {
                             'Please enter a title',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 20.0,
+                              fontSize: 18.0,
                             ),
                           ),
                         )
                       : Container(),
 
                     // used for padding
-                    SizedBox(height: _height * 0.05),
+                    SizedBox(height: _height * 0.01),
 
                     // first row of PASTEL colors
                     Row(
@@ -711,11 +810,8 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
 
-                    // used as padding
-                    SizedBox(height: _height * 0.05),
-
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
 
                         FlatButton(
@@ -727,14 +823,19 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                           onPressed: () {
-                            _title.clear();
-                            _description.clear();
+                            _titleKeyboard.clear();
+                            _descriptionKeyboard.clear();
+                            _stepsKeyboard.clear();
+
+                            _currStepList.clear();
+
                             _currIcon = '0xe800';
                             _currColor = Color(int.parse('0xffff9aa2'));
                             _currType = null;
                             _currLength = 'day';
-                            _currAmount = 0;
+                            _currAmount = 1;
                             _currNotify = false;
+
                             userData.title = '';
                             userData.description = '';
                             userData.icon = '';
@@ -742,12 +843,10 @@ class _HomePageState extends State<HomePage> {
                             userData.date = '';
                             userData.length = '';
                             userData.amount = null;
+
                             Navigator.of(context).pop();
                           },
                         ),
-
-                        // used as padding
-                        SizedBox(width: _width * 0.15),
 
                         // When users click Confirm, the firestore database is then updated with the user post
                         FlatButton(
@@ -775,8 +874,8 @@ class _HomePageState extends State<HomePage> {
 
                             crud.addTaskHabit(data, context);
 
-                            _title.clear();
-                            _description.clear();
+                            _titleKeyboard.clear();
+                            _descriptionKeyboard.clear();
                             Navigator.of(context).pop();
                           },
                         )
@@ -839,6 +938,7 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             _currColor = Color(color);
             userData.color = color.toString();
+            _stepsController = ItemScrollController();
             Navigator.of(context).pop();
             addTaskPrompt(context);
           });
@@ -1018,7 +1118,7 @@ class TaskCardState extends State<TaskCard> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Icon(Icons.edit, size: 30.0, color: Colors.white),
+                        Icon(IconData(0xe819, fontFamily: 'icons'), size: 30.0, color: Colors.white),
                       ],
                     ),
                   ),
@@ -1047,7 +1147,7 @@ class TaskCardState extends State<TaskCard> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Icon(Icons.delete_outline, size: 35.0, color: Colors.white),
+                        Icon(IconData(0xe81e, fontFamily: 'icons'), size: 28.0, color: Colors.white),
                       ],
                     ),
                   ),
