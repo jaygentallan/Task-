@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart' as prefix0;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +18,7 @@ import 'package:taskplus/services/crud.dart';
 import 'package:taskplus/singletons/userdata.dart';
 
 import 'package:intl/intl.dart';
+import 'package:date_format/date_format.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -44,15 +46,16 @@ class _HomePageState extends State<HomePage> {
   String _currLength = 'day';
   int _currAmount = 1;
   bool _currNotify = false;
+  String _currAppointmentDate = '';
+  final now = DateTime.now();
 
-  List<String> _currStepList = <String> [];
+  List<List> _currStepList = <List> [];
   List<IconData> _iconList = <IconData>[];
 
   @override
   void initState() {
     super.initState();
     _rows = [TaskCard(key: UniqueKey())];
-
     _initIcons();
   }
 
@@ -60,15 +63,6 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.width;
-
-    void _onReorder(int oldIndex, int newIndex) {
-      setState(() {
-        Widget row = _rows.removeAt(oldIndex);
-        _rows.insert(newIndex, row);
-      });
-    }
-
-    ScrollController _scrollController = PrimaryScrollController.of(context) ?? ScrollController();
 
     return Column(
       children: <Widget>[
@@ -130,13 +124,7 @@ class _HomePageState extends State<HomePage> {
                 // used as padding.
                 SizedBox(height: 10.0),
 
-                ReorderableColumn(
-                  scrollController: _scrollController,
-                  needsLongPressDraggable: true,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: _rows,
-                  onReorder: _onReorder,
-                ),
+                _rows[0],
 
                 /*
                 LongPressDraggable(
@@ -224,7 +212,7 @@ class _HomePageState extends State<HomePage> {
             child: Center(
               child: Container(
                 padding: EdgeInsets.only(
-                  top: _height * 0.05,
+                  top: _height * 0.03,
                   left: _width * 0.05,
                   right: _width * 0.05,
                 ),
@@ -246,14 +234,14 @@ class _HomePageState extends State<HomePage> {
                   children: <Widget>[
 
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
 
                         SizedBox(width: 10.0),
 
                         Container(
-                          height: 60.0,
-                          width: 60.0,
+                          height: 70.0,
+                          width: 70.0,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             boxShadow: [
@@ -323,7 +311,7 @@ class _HomePageState extends State<HomePage> {
                             controller: _titleKeyboard,
                             showCursor: false,
                             keyboardType: TextInputType.text,
-                            maxLines: 2,
+                            maxLines: null,
                             maxLength: 27,
                             maxLengthEnforced: true,
                             buildCounter: (BuildContext context, { int currentLength, int maxLength, bool isFocused }) => null,
@@ -349,8 +337,7 @@ class _HomePageState extends State<HomePage> {
 
                     // container for description textfield
                     Container(
-                      height: _height * 0.253,
-                      margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                      margin: EdgeInsets.only(left: _width * 0.04, right: _width * 0.04, top: _height * 0.015),
                       alignment: FractionalOffset.center,
                       decoration: BoxDecoration(
                           color: Colors.transparent,
@@ -364,7 +351,8 @@ class _HomePageState extends State<HomePage> {
                         controller: _descriptionKeyboard,
                         keyboardType: TextInputType.text,
                         showCursor: false,
-                        maxLines: 3,
+                        autofocus: false,
+                        maxLines: null,
                         maxLength: 60,
                         maxLengthEnforced: true,
                         buildCounter: (BuildContext context, { int currentLength, int maxLength, bool isFocused }) => null,
@@ -424,6 +412,7 @@ class _HomePageState extends State<HomePage> {
                             setState(() {
                               _currType = newValue;
                               userData.type = newValue;
+                              _stepsController = ItemScrollController();
                               Navigator.of(context).pop();
                               addTaskPrompt(context);
                             });
@@ -445,19 +434,16 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
 
-                    // used as padding
-                    SizedBox(height: _height * 0.015),
-
+                    // Habit section
                     _currType == 'Habit'
                       ? userData.title != ''
-                        ? Container(
-                            height: _height * 0.46,
-                            margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
 
-                                AutoSizeText(
+                              Padding(
+                                padding: EdgeInsets.only(top: 6.0, bottom: 12.0),
+                                child: AutoSizeText(
                                   '${userData.title}',
                                   style: TextStyle(
                                     color: Colors.white,
@@ -466,180 +452,195 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   textAlign: TextAlign.start,
                                 ),
+                              ),
 
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: <Widget>[
-
-                                    Text(
-                                      'Every',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18.0,
-                                      ),
-                                    ),
-
-                                    Container(
-                                      margin: EdgeInsets.symmetric(horizontal: _width * 0.01),
-                                      child: Theme(
-                                        data: ThemeData(
-                                          canvasColor: _currColor,
-                                        ),
-                                        child: DropdownButton<String>(
-                                          value: _currLength,
-                                          icon: Icon(IconData(0xe829, fontFamily: 'icons')),
-                                          iconEnabledColor: Colors.white,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18.0,
-                                            fontFamily: 'Poppins',
-                                          ),
-                                          underline: Container(
-                                            height: 2.0,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.all(Radius.circular(1.0)),
-                                            ),
-                                          ),
-                                          onChanged: (String newValue) {
-                                            setState(() {
-                                              _currLength = newValue;
-                                              userData.length = newValue;
-                                              Navigator.of(context).pop();
-                                              addTaskPrompt(context);
-                                            });
-                                          },
-                                          items: ['day', 'week', 'month'].map<DropdownMenuItem<String>>((String value) {
-                                            return DropdownMenuItem<String> (
-                                              value: value,
-                                              child: Text(
-                                                value,
-                                                style: TextStyle(
-                                                  fontSize: 18.0,
-                                                  fontFamily: 'Poppins',
-                                                ),
-                                              ),
-                                            );
-                                          })
-                                              .toList(),
-                                        ),
-                                      ),
-                                    ),
-
-                                  ],
+                              Container(
+                                height: _height * 0.45,
+                                margin: EdgeInsets.symmetric(horizontal: _width * 0.013),
+                                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white30,
+                                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
                                 ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
 
-                                _currLength == 'week' || _currLength == 'month'
-                                  ? Row(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: <Widget>[
-
-                                        Text(
-                                          'As often as',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18.0,
-                                          ),
-                                        ),
-
-                                        Container(
-                                          width: _width * 0.171,
-                                          margin: EdgeInsets.symmetric(horizontal: _width * 0.02),
-                                          child: Theme(
-                                            data: ThemeData(
-                                              canvasColor: _currColor,
-                                            ),
-                                            child: ButtonTheme(
-                                              alignedDropdown: true,
-                                              child: DropdownButton<int>(
-                                                value: _currAmount,
-                                                icon: Icon(IconData(0xe829, fontFamily: 'icons')),
-                                                iconEnabledColor: Colors.white,
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 18.0,
-                                                  fontFamily: 'Poppins',
-                                                ),
-                                                underline: Container(
-                                                  height: 2.0,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white,
-                                                    borderRadius: BorderRadius.all(Radius.circular(1.0)),
-                                                  ),
-                                                ),
-                                                onChanged: (int newValue) {
-                                                  setState(() {
-                                                    _currAmount = newValue;
-                                                    userData.amount = newValue;
-                                                    Navigator.of(context).pop();
-                                                    addTaskPrompt(context);
-                                                  });
-                                                },
-                                                items: List<DropdownMenuItem<int>>.generate(50, ((int value) {
-                                                  return DropdownMenuItem<int> (
-                                                    value: value+1,
-                                                    child: Text(
-                                                      '${value+1}',
-                                                      style: TextStyle(
-                                                        fontSize: 18.0,
-                                                        fontFamily: 'Poppins',
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-
-                                        Text(
-                                          'times',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18.0,
-                                          ),
-                                        ),
-
-                                      ],
-                                    )
-                                  : Container(),
-
-                                // used as padding
-                                SizedBox(height: _height * 0.01),
-
-                                Expanded(
-                                  child: Stack(
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: <Widget>[
 
-                                      Positioned(
-                                        left: 0.0,
-                                        child: Text(
-                                          'Notify me',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18.0,
+                                      Text(
+                                        'Every',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18.0,
+                                        ),
+                                      ),
+
+                                      Container(
+                                        margin: EdgeInsets.symmetric(horizontal: _width * 0.01),
+                                        child: Theme(
+                                          data: ThemeData(
+                                            canvasColor: _currColor,
+                                          ),
+                                          child: DropdownButton<String>(
+                                            value: _currLength,
+                                            icon: Icon(IconData(0xe829, fontFamily: 'icons')),
+                                            iconEnabledColor: Colors.white,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18.0,
+                                              fontFamily: 'Poppins',
+                                            ),
+                                            underline: Container(
+                                              height: 2.0,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.all(Radius.circular(1.0)),
+                                              ),
+                                            ),
+                                            onChanged: (String newValue) {
+                                              setState(() {
+                                                _currLength = newValue;
+                                                userData.length = newValue;
+                                                Navigator.of(context).pop();
+                                                addTaskPrompt(context);
+                                              });
+                                            },
+                                            items: ['day', 'week', 'month'].map<DropdownMenuItem<String>>((String value) {
+                                              return DropdownMenuItem<String> (
+                                                value: value,
+                                                child: Text(
+                                                  value,
+                                                  style: TextStyle(
+                                                    fontSize: 18.0,
+                                                    fontFamily: 'Poppins',
+                                                  ),
+                                                ),
+                                              );
+                                            })
+                                                .toList(),
                                           ),
                                         ),
                                       ),
 
-                                      Positioned(
-                                        right: 0.0,
-                                        child: CupertinoSwitch(
-                                          value: _currNotify,
-                                          onChanged: (bool value) { setState(() { _currNotify = value; }); },
-                                        ),
-                                      ),
+                                    ],
+                                  ),
 
-                                  ],
+                                  _currLength == 'week' || _currLength == 'month'
+                                    ? Row(
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: <Widget>[
+
+                                          Text(
+                                            'As often as',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18.0,
+                                            ),
+                                          ),
+
+                                          Container(
+                                            width: _width * 0.19,
+                                            margin: EdgeInsets.symmetric(horizontal: _width * 0.02),
+                                            child: Theme(
+                                              data: ThemeData(
+                                                canvasColor: _currColor,
+                                              ),
+                                              child: ButtonTheme(
+                                                alignedDropdown: true,
+                                                child: DropdownButton<int>(
+                                                  value: _currAmount,
+                                                  icon: Icon(IconData(0xe829, fontFamily: 'icons')),
+                                                  iconEnabledColor: Colors.white,
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18.0,
+                                                    fontFamily: 'Poppins',
+                                                  ),
+                                                  underline: Container(
+                                                    height: 2.0,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius: BorderRadius.all(Radius.circular(1.0)),
+                                                    ),
+                                                  ),
+                                                  onChanged: (int newValue) {
+                                                    setState(() {
+                                                      _currAmount = newValue;
+                                                      userData.amount = newValue;
+                                                      Navigator.of(context).pop();
+                                                      addTaskPrompt(context);
+                                                    });
+                                                  },
+                                                  items: List<DropdownMenuItem<int>>.generate(50, ((int value) {
+                                                    return DropdownMenuItem<int> (
+                                                      value: value+1,
+                                                      child: Text(
+                                                        '${value+1}',
+                                                        style: TextStyle(
+                                                          fontSize: 18.0,
+                                                          fontFamily: 'Poppins',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+
+                                          Text(
+                                            'times',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18.0,
+                                            ),
+                                          ),
+
+                                        ],
+                                      )
+                                    : Container(),
+
+                                  // used as padding
+                                  SizedBox(height: _height * 0.01),
+
+                                  Expanded(
+                                    child: Stack(
+                                      children: <Widget>[
+
+                                        Positioned(
+                                          left: 0.0,
+                                          child: Text(
+                                            'Notify me',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18.0,
+                                            ),
+                                          ),
+                                        ),
+
+                                        Positioned(
+                                          right: 0.0,
+                                          child: CupertinoSwitch(
+                                            value: _currNotify,
+                                            onChanged: (bool value) { setState(() { _currNotify = value; }); },
+                                          ),
+                                        ),
+
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            )
                           )
+                        ],
                         )
                         : Container(
                             height: _height * 0.06,
-                            margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                            margin: EdgeInsets.only(left: _width * 0.04, right: _width * 0.04, top: _height * 0.03, bottom: _height * 0.05),
                             child: Text(
                               'Please enter a title',
                               style: TextStyle(
@@ -648,72 +649,23 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           )
+
+                    // Goal section
                       : _currType == 'Goal'
                       ? userData.title != ''
                         ? Column(
                             children: <Widget>[
-                              Container(
-                                height: _height * 0.36,
-                                margin: EdgeInsets.symmetric(horizontal: _width * 0.013),
-                                padding: EdgeInsets.only(left: 0.0),
-                                decoration: BoxDecoration(
-                                  color: Colors.white30,
-                                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                                ),
-                                child: Column(
-                                  children: <Widget>[
-
-                                    _currStepList.length != 0
-                                      ? Container(
-                                        child: Flexible(
-                                          child: Scrollbar(
-                                            child: ScrollablePositionedList.builder(
-                                              itemScrollController: _stepsController,
-                                              itemCount: _currStepList.length,
-                                              itemBuilder: (BuildContext ctxt, int index) {
-                                                return Container(
-                                                  child: Row(
-                                                    children: <Widget>[
-
-                                                      Transform.scale(
-                                                        scale: 1.5,
-                                                        child: Checkbox(
-                                                          activeColor: _currColor,
-                                                          checkColor: Colors.white,
-                                                          value: true,
-                                                          onChanged: (bool value) {},
-                                                        ),
-                                                      ),
-
-                                                      Text(
-                                                        _currStepList[index],
-                                                        style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 15.0,
-                                                      ),),
-
-                                                    ],
-                                                  ),
-                                                );
-
-                                              }
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    : Container(),
-                                  ],
-                                ),
-                              ),
 
                               Container(
-                                margin: EdgeInsets.only(top: 10.0, left: 10.0),
+                                width: _width * 0.725,
+                                padding: EdgeInsets.symmetric(horizontal: _width * 0.02),
                                 child: TextField(
-                                  textAlign: TextAlign.justify,
+                                  textAlign: TextAlign.center,
                                   controller: _stepsKeyboard,
                                   keyboardType: TextInputType.text,
+                                  autofocus: false,
                                   showCursor: false,
-                                  maxLines: 1,
+                                  maxLines: null,
                                   maxLength: 60,
                                   maxLengthEnforced: true,
                                   buildCounter: (BuildContext context, { int currentLength, int maxLength, bool isFocused }) => null,
@@ -732,25 +684,88 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   onSubmitted: (value) {
                                     setState(() {
-                                      _currStepList.add(value);
+                                      _currStepList.add([value, false]);
                                       _stepsKeyboard.clear();
                                     });
-                                    _currStepList.length == 1
-                                        ? _stepsController.jumpTo(index: _currStepList.length-1)
-                                        : _currStepList.length == 2
-                                        ? _stepsController.jumpTo(index: _currStepList.length-2)
-                                        : _currStepList.length >= 3
-                                        ? _stepsController.jumpTo(index: _currStepList.length-3)
-                                        : Container();
+                                    _autoScrollDown();
                                   },
                                 ),
                               ),
+
+                              _currStepList.length != 0
+                              ? Container(
+                                height: _height * 0.36,
+                                margin: EdgeInsets.symmetric(horizontal: _width * 0.013),
+                                padding: EdgeInsets.only(left: 0.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white30,
+                                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                                ),
+                                child: Column(
+                                  children: <Widget>[
+
+                                      // shows the display for the goal steps
+                                      Container(
+                                        child: Flexible(
+                                          child: Scrollbar(
+                                            child: ScrollablePositionedList.builder(
+                                              itemScrollController: _stepsController,
+                                              itemCount: _currStepList.length,
+                                              itemBuilder: (BuildContext ctxt, int index) {
+                                                return Container(
+                                                  child: Row(
+                                                    children: <Widget>[
+
+                                                      Transform.scale(
+                                                        scale: 1.5,
+                                                        child: Checkbox(
+                                                          activeColor: _currColor,
+                                                          checkColor: Colors.white,
+                                                          value: _currStepList[index][1],
+                                                          onChanged: (bool value) {
+                                                            setState(() {
+                                                              _currStepList[index][1] = value;
+                                                            });
+                                                            _stepsController = ItemScrollController();
+                                                            Navigator.of(context).pop();
+                                                            addTaskPrompt(context);
+                                                          },
+                                                        ),
+                                                      ),
+
+                                                      Flexible(
+                                                        child: Container(
+                                                          padding: EdgeInsets.only(top: 3.0),
+                                                          child: AutoSizeText(
+                                                            _currStepList[index][0],
+                                                            style: TextStyle(
+                                                              color: Colors.white,
+                                                              height: 1.0,
+                                                              fontSize: 16.0,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+
+                                                    ],
+                                                  ),
+                                                );
+
+                                              }
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              )
+                              : Container(),
 
                             ],
                           )
                         : Container(
                           height: _height * 0.06,
-                          margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                      margin: EdgeInsets.only(left: _width * 0.04, right: _width * 0.04, top: _height * 0.03, bottom: _height * 0.05),
                           child: Text(
                             'Please enter a title',
                             style: TextStyle(
@@ -759,14 +774,134 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         )
+
+                    // Appointment section
                       : _currType == 'Appointment'
                       ? userData.title != ''
-                        ? Container(
-                          height: _height * 0.4,
-                        )
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+
+                              Padding(
+                                padding: EdgeInsets.only(top: 6.0, bottom: 12.0),
+                                child: AutoSizeText(
+                                  '${userData.title}',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    height: 1.0,
+                                    fontSize: 18.0,
+                                  ),
+                                  textAlign: TextAlign.start,
+                                ),
+                              ),
+
+                              _currAppointmentDate != ''
+                                ? Container(
+                                  height: _height * 0.25,
+                                  margin: EdgeInsets.symmetric(horizontal: _width * 0.013),
+                                  padding: EdgeInsets.symmetric(horizontal: 10.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white30,
+                                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+
+                                      Text(
+                                        '${formatDate(
+                                          DateTime.parse(_currAppointmentDate),
+                                          [DD, ', ', MM, ' ', d, ', ', yyyy, '\n', h, ':', mm, ' ', am])}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          height: 1.5,
+                                          fontSize: 18.0,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+
+                                      SizedBox(width: _width),
+
+                                    ],
+                                  ),
+                                )
+                                : Container(),
+
+                              SizedBox(height: _height * 0.01),
+
+                              GestureDetector(
+                                child: Text(
+                                  "Choose date",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    height: 1.5,
+                                    fontSize: 18.0,
+                                  ),
+                                ),
+                                onTap: () {
+                                  showModalBottomSheet(
+                                      context: context,
+                                      builder: (BuildContext builder) {
+                                        return Container(
+                                          height: _height * 0.6,
+                                          child: Column(
+                                            children: <Widget>[
+
+                                              Container(
+                                                width: _width,
+                                                height: _height * 0.1,
+                                                color: Colors.white,
+                                                child: FlatButton(
+                                                  child: Text(
+                                                    'Confirm',
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                      fontSize: 18.0,
+                                                    ),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                    Navigator.of(context).pop();
+                                                    addTaskPrompt(context);
+                                                  },
+                                                ),
+                                              ),
+
+                                              Container(
+                                                height: _height * 0.5,
+                                                child: CupertinoDatePicker(
+                                                  initialDateTime: DateTime.now(),
+                                                  onDateTimeChanged: (DateTime newdate) {
+                                                    _currAppointmentDate = newdate.toString();
+                                                  },
+                                                  use24hFormat: false,
+                                                  minimumDate: DateTime(now.year, now.month, now.day, 0),
+                                                  maximumDate: DateTime(2020, 12, 30),
+                                                  minimumYear: 2010,
+                                                  maximumYear: 2020,
+                                                  minuteInterval: 1,
+                                                  mode: CupertinoDatePickerMode.dateAndTime,
+                                                ),
+                                              ),
+
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                  );
+
+                                },
+                              ),
+
+                              SizedBox(height: _height * 0.01),
+
+                            ],
+                          )
+
                         : Container(
                           height: _height * 0.06,
-                          margin: EdgeInsets.symmetric(horizontal: _width * 0.04),
+                      margin: EdgeInsets.only(left: _width * 0.04, right: _width * 0.04, top: _height * 0.03, bottom: _height * 0.05),
                           child: Text(
                             'Please enter a title',
                             style: TextStyle(
@@ -835,6 +970,7 @@ class _HomePageState extends State<HomePage> {
                             _currLength = 'day';
                             _currAmount = 1;
                             _currNotify = false;
+                            _currAppointmentDate = '';
 
                             userData.title = '';
                             userData.description = '';
@@ -890,6 +1026,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _autoScrollDown() {
+    _currStepList.length == 1
+        ? _stepsController.jumpTo(index: _currStepList.length-1)
+        : _currStepList.length == 2
+        ? _stepsController.jumpTo(index: _currStepList.length-2)
+        : _currStepList.length >= 3
+        ? _stepsController.jumpTo(index: _currStepList.length-3)
+        : Container();
+  }
 
   void _initIcons() {
     // initialize icons for task card
